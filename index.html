@@ -97,11 +97,17 @@
             text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
             cursor: pointer;
             transition: all 0.3s ease;
+            position: relative;
             background: rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            border: 5px solid white; /* حدود بيضاء سميكة */
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             user-select: none;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 5px;
         }
 
         .card:hover {
@@ -116,51 +122,148 @@
             filter: grayscale(0.8);
         }
 
-        .card-ai {
-            background: repeating-linear-gradient(
-                45deg,
-                rgba(255,255,255,0.1),
-                rgba(255,255,255,0.1) 10px,
-                rgba(255,255,255,0.2) 10px,
-                rgba(255,255,255,0.2) 20px
-            );
-            color: transparent;
-            cursor: default;
-            text-shadow: none;
+        .card-corner {
+            font-size: 14px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
         }
 
-        .card-ai:hover { transform: none; }
+        .card-corner.top {
+            align-self: flex-start;
+        }
 
-        /* ألوان البطاقات */
-        .card.red { background: rgba(255, 59, 48, 0.8); }
-        .card.blue { background: rgba(0, 122, 255, 0.8); }
-        .card.green { background: rgba(52, 199, 89, 0.8); }
-        .card.yellow { background: rgba(255, 204, 0, 0.8); color: #333; text-shadow: none;}
-        .card.black { background: rgba(30, 30, 30, 0.9); color: white; }
+        .card-corner.bottom {
+            align-self: flex-end;
+            transform: rotate(180deg);
+        }
 
-        .draw-pile {
-            background: rgba(255,255,255,0.1);
-            border: 2px dashed rgba(255,255,255,0.5);
+        .card-center {
+            font-size: 32px;
+            font-weight: bold;
             color: white;
-            font-size: 14px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* أنماط الخلفية الملونة والأنماط */
+        .card.green {
+            background-color: #34c759;
+            /* نمط متموج بسيط */
+            background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .1) 10px, rgba(255, 255, 255, .2) 10px, rgba(255, 255, 255, .2) 20px);
+        }
+
+        .card.yellow {
+            background-color: #ffcc00;
+            /* نمط متموج بسيط */
+            background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .1) 10px, rgba(255, 255, 255, .2) 10px, rgba(255, 255, 255, .2) 20px);
+            color: white; /* الحفاظ على اللون الأبيض */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .card.blue {
+            background-color: #007aff;
+            /* نمط شبكي بسيط */
+            background-image: linear-gradient(0deg, transparent 50%, rgba(255, 255, 255, .1) 50%), linear-gradient(90deg, transparent 50%, rgba(255, 255, 255, .1) 50%);
+            background-size: 20px 20px;
+        }
+
+        .card.red {
+            background-color: #ff3b30;
+            /* نمط منقط بسيط */
+            background-image: radial-gradient(rgba(255, 255, 255, .1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .card.wild {
+            /* نمط مقسم للألوان الأربعة مع نمط منقط */
+            background-image: linear-gradient(135deg, #ff3b30 50%, #ffcc00 50%), linear-gradient(45deg, #007aff 50%, #34c759 50%), radial-gradient(rgba(255, 255, 255, .1) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 20px 20px;
+            background-color: transparent;
+        }
+
+        /* أنماط البطاقات الخاصة بحدود سوداء */
+        .card.special-black {
+            border-color: black;
+            background-color: transparent;
+        }
+
+        /* نمط Skip bحدود سوداء - مثل البطاقة الخضراء */
+        .card.skip-special {
+            background-color: #34c759;
+            border-color: black;
+            background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .1) 10px, rgba(255, 255, 255, .2) 10px, rgba(255, 255, 255, .2) 20px);
+        }
+
+        .skip-icon {
+            width: 32px;
+            height: 32px;
+            border: 3px solid white;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .skip-icon::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: white;
+            transform: rotate(-45deg) translateY(-50%);
+        }
+
+        /* نمط كومة السحب وظهر البطاقة */
+        .draw-pile {
+            background-color: black;
+            border-color: white;
+            background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .1) 10px, rgba(255, 255, 255, .2) 10px, rgba(255, 255, 255, .2) 20px);
         }
 
         .draw-pile:hover:not(.disabled) {
-            background: rgba(255,255,255,0.2);
             transform: scale(1.05);
         }
 
-        /* نصوص ولوحات تحكم */
-        h2 { margin: 0; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .status-badge {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-size: 1.1rem;
-            border: 1px solid rgba(255,255,255,0.2);
+        /* نمط البطاقة الخاصة بحدود سوداء */
+        .card.card-reverse-special {
+            border-color: black;
+            background-color: #007aff;
+            background-image: linear-gradient(0deg, transparent 50%, rgba(255, 255, 255, .1) 50%), linear-gradient(90deg, transparent 50%, rgba(255, 255, 255, .1) 50%);
+            background-size: 20px 20px;
         }
 
+        .reverse-icon {
+            width: 32px;
+            height: 32px;
+            position: relative;
+        }
+
+        .reverse-icon::before, .reverse-icon::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 10px;
+            border-bottom: 3px solid white;
+            border-right: 3px solid white;
+            transform: rotate(45deg);
+        }
+
+        .reverse-icon::before {
+            top: 0; left: 0;
+        }
+
+        .reverse-icon::after {
+            bottom: 0; right: 0;
+            transform: rotate(225deg);
+        }
+
+        /* نمط مؤشر اللون الحالي */
         .current-color-indicator {
+            position: relative;
+            overflow: hidden;
+            border: 2px solid white;
             padding: 5px 15px;
             border-radius: 15px;
             font-size: 0.9rem;
@@ -170,54 +273,14 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
-        .uno-btn {
-            background: #ff3b30;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 50px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4);
-            transition: all 0.3s ease;
-        }
-        .uno-btn:hover { background: #ff1a10; transform: scale(1.05); }
-        .uno-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-        /* نافذة اختيار اللون */
-        .color-picker-modal {
+        .current-color-indicator::after {
+            content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            border-radius: 20px;
-        }
-        
-        .color-options {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .color-option {
-            width: 60px; height: 60px;
             border-radius: 50%;
-            cursor: pointer;
-            border: 3px solid white;
-            transition: transform 0.2s;
+            background-image: radial-gradient(rgba(255, 255, 255, .1) 1px, transparent 1px);
+            background-size: 10px 10px;
         }
-        .color-option:hover { transform: scale(1.2); }
-        .color-option.red { background: #ff3b30; }
-        .color-option.blue { background: #007aff; }
-        .color-option.green { background: #34c759; }
-        .color-option.yellow { background: #ffcc00; }
-
     </style>
 </head>
 <body>
@@ -407,21 +470,39 @@
 
             if (!topCard) return <div>جاري التحميل...</div>;
 
+            const Card = ({ card, onClick, className, specialClass = '' }) => {
+                let content = card.value;
+                let centerIcon = <div className="card-center">{card.value}</div>;
+                
+                if (card.value === 'Skip') {
+                    centerIcon = <div className="skip-icon"></div>;
+                    content = 'Skip';
+                } else if (card.value === 'Rev') {
+                    centerIcon = <div className="reverse-icon"></div>;
+                    content = 'Rev';
+                } else if (card.value === 'Wild') {
+                    centerIcon = <div className="card-center">Wild</div>;
+                    content = 'Wild';
+                } else if (card.value === 'Wild +4') {
+                    centerIcon = <div className="card-center">+4</div>;
+                    content = '+4';
+                }
+
+                return (
+                    <div 
+                        className={`card ${card.color} ${specialClass} ${className}`}
+                        onClick={onClick}
+                    >
+                        <div className="card-corner top">{content}</div>
+                        {centerIcon}
+                        <div className="card-corner bottom">{content}</div>
+                    </div>
+                );
+            };
+
             return (
                 <div className="glass-container">
                     
-                    {/* نافذة اختيار اللون */}
-                    {showColorPicker && (
-                        <div className="color-picker-modal">
-                            <h2>اختر اللون الجديد</h2>
-                            <div className="color-options">
-                                {COLORS.map(c => (
-                                    <div key={c} className={`color-option ${c}`} onClick={() => onColorPicked(c)}></div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
                     {/* منطقة الذكاء الاصطناعي */}
                     <div className="player-area">
                         <h2>الذكاء الاصطناعي (AI)</h2>
@@ -444,13 +525,15 @@
                                 className={`card draw-pile ${turn === 'player' ? '' : 'disabled'}`}
                                 onClick={() => turn === 'player' && drawSingleCard(true)}
                             >
-                                سحب<br/>ورقة
+                                <div className="card-center">UNO<br/>PARTY</div>
                             </div>
                             
                             <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-                                <div className={`card ${topCard.color === 'black' ? activeColor : topCard.color}`}>
-                                    {topCard.value}
-                                </div>
+                                <Card 
+                                    card={topCard} 
+                                    className={`${topCard.color === 'black' ? activeColor : topCard.color}`}
+                                    specialClass={(topCard.value === 'Skip' || topCard.value === 'Rev') ? 'special-black' : ''}
+                                />
                                 <div className="current-color-indicator" style={{backgroundColor: activeColor === 'red' ? '#ff3b30' : activeColor === 'blue' ? '#007aff' : activeColor === 'green' ? '#34c759' : '#ffcc00', color: activeColor === 'yellow' ? 'black' : 'white'}}>
                                     اللون: {activeColor}
                                 </div>
@@ -462,25 +545,21 @@
                     <div className="player-area">
                         <div style={{display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', padding: '0 20px'}}>
                             <span className="status-badge">أنت (البطاقات: {playerHand.length})</span>
-                            <button 
-                                className="uno-btn" 
-                                disabled={playerHand.length !== 2 || unoCalled || turn !== 'player'}
-                                onClick={() => setUnoCalled(true)}
-                            >
-                                {unoCalled ? 'تم قول UNO!' : 'قل UNO!'}
-                            </button>
+                            {playerHand.length === 2 && (
+                                <button className="uno-btn">قل UNO!</button>
+                            )}
                         </div>
                         <div className="cards-container">
                             {playerHand.map((card) => {
                                 const valid = turn === 'player' && isValidPlay(card);
                                 return (
-                                    <div 
+                                    <Card 
                                         key={card.id} 
-                                        className={`card ${card.color} ${!valid ? 'disabled' : ''}`}
+                                        card={card} 
+                                        className={`${!valid ? 'disabled' : ''}`}
                                         onClick={() => valid && playCard(card, true)}
-                                    >
-                                        {card.value}
-                                    </div>
+                                        specialClass={(card.value === 'Skip' || card.value === 'Rev') ? 'special-black' : ''}
+                                    />
                                 )
                             })}
                         </div>
