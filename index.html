@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNO - Glassmorphism Edition PRO</title>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* إعدادات عامة وخلفية متحركة */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(-45deg, #1a1a2e, #16213e, #0f3460, #e94560);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* حاوية التصميم الزجاجي */
+        .glass-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90vw;
+            max-width: 1000px;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            direction: ltr;
+            position: relative;
+        }
+
+        /* منطقة اللاعبين والطاولة */
+        .player-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cards-container {
+            display: flex;
+            gap: -30px; /* تداخل أكبر للبطاقات */
+            flex-wrap: wrap;
+            justify-content: center;
+            min-height: 120px;
+            padding: 10px;
+        }
+
+        .table-area {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-grow: 1;
+        }
+
+        .table-cards {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+        }
+
+        /* تصميم البطاقة الزجاجية */
+        .card {
+            width: 80px;
+            height: 120px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            user-select: none;
+        }
+
+        .card:hover {
+            transform: translateY(-15px) scale(1.1);
+            z-index: 10;
+        }
+
+        .card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            filter: grayscale(0.8);
+        }
+
+        .card-ai {
+            background: repeating-linear-gradient(
+                45deg,
+                rgba(255,255,255,0.1),
+                rgba(255,255,255,0.1) 10px,
+                rgba(255,255,255,0.2) 10px,
+                rgba(255,255,255,0.2) 20px
+            );
+            color: transparent;
+            cursor: default;
+            text-shadow: none;
+        }
+
+        .card-ai:hover { transform: none; }
+
+        /* ألوان البطاقات */
+        .card.red { background: rgba(255, 59, 48, 0.8); }
+        .card.blue { background: rgba(0, 122, 255, 0.8); }
+        .card.green { background: rgba(52, 199, 89, 0.8); }
+        .card.yellow { background: rgba(255, 204, 0, 0.8); color: #333; text-shadow: none;}
+        .card.black { background: rgba(30, 30, 30, 0.9); color: white; }
+
+        .draw-pile {
+            background: rgba(255,255,255,0.1);
+            border: 2px dashed rgba(255,255,255,0.5);
+            color: white;
+            font-size: 14px;
+        }
+
+        .draw-pile:hover:not(.disabled) {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.05);
+        }
+
+        /* نصوص ولوحات تحكم */
+        h2 { margin: 0; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .status-badge {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .current-color-indicator {
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-top: 10px;
+            text-transform: uppercase;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .uno-btn {
+            background: #ff3b30;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4);
+            transition: all 0.3s ease;
+        }
+        .uno-btn:hover { background: #ff1a10; transform: scale(1.05); }
+        .uno-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* نافذة اختيار اللون */
+        .color-picker-modal {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            border-radius: 20px;
+        }
+        
+        .color-options {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .color-option {
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid white;
+            transition: transform 0.2s;
+        }
+        .color-option:hover { transform: scale(1.2); }
+        .color-option.red { background: #ff3b30; }
+        .color-option.blue { background: #007aff; }
+        .color-option.green { background: #34c759; }
+        .color-option.yellow { background: #ffcc00; }
+
+    </style>
+</head>
+<body>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const COLORS = ['red', 'blue', 'green', 'yellow'];
+        const VALUES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Skip', 'Rev', '+2'];
+        const SPECIALS = ['Wild', 'Wild +4'];
+
+        const generateDeck = () => {
+            let deck = [];
+            for (let color of COLORS) {
+                for (let value of VALUES) {
+                    deck.push({ color, value, type: 'normal', id: Math.random().toString(36).substr(2, 9) });
+                    if(value !== '0') {
+                        deck.push({ color, value, type: 'normal', id: Math.random().toString(36).substr(2, 9) });
+                    }
+                }
+            }
+            // إضافة الجوكر
+            for(let i=0; i<4; i++) {
+                deck.push({ color: 'black', value: 'Wild', type: 'wild', id: Math.random().toString(36).substr(2, 9) });
+                deck.push({ color: 'black', value: 'Wild +4', type: 'wild', id: Math.random().toString(36).substr(2, 9) });
+            }
+            return deck.sort(() => Math.random() - 0.5);
+        };
+
+        const UnoGame = () => {
+            const [deck, setDeck] = useState([]);
+            const [playerHand, setPlayerHand] = useState([]);
+            const [aiHand, setAiHand] = useState([]);
+            const [discardPile, setDiscardPile] = useState([]);
+            const [turn, setTurn] = useState('player'); 
+            const [message, setMessage] = useState('ابدأ اللعب!');
+            const [activeColor, setActiveColor] = useState('');
+            const [showColorPicker, setShowColorPicker] = useState(false);
+            const [pendingWildCard, setPendingWildCard] = useState(null);
+            const [unoCalled, setUnoCalled] = useState(false);
+
+            useEffect(() => {
+                startNewGame();
+            }, []);
+
+            const startNewGame = () => {
+                let newDeck = generateDeck();
+                let initialPlayerHand = newDeck.splice(0, 7);
+                let initialAiHand = newDeck.splice(0, 7);
+                
+                let startIndex = newDeck.findIndex(c => c.type === 'normal' && !['Skip', 'Rev', '+2'].includes(c.value));
+                let firstCard = newDeck.splice(startIndex, 1)[0];
+
+                setPlayerHand(initialPlayerHand);
+                setAiHand(initialAiHand);
+                setDiscardPile([firstCard]);
+                setActiveColor(firstCard.color);
+                setDeck(newDeck);
+                setTurn('player');
+                setMessage('دورك يا بطل!');
+                setUnoCalled(false);
+            };
+
+            const topCard = discardPile[discardPile.length - 1];
+
+            const isValidPlay = (card) => {
+                if (!topCard) return false;
+                if (card.type === 'wild') return true;
+                return card.color === activeColor || card.value === topCard.value;
+            };
+
+            const drawCards = (count, targetPlayer) => {
+                const drawn = deck.slice(-count);
+                const remaining = deck.slice(0, -count);
+                setDeck(remaining);
+                if (targetPlayer === 'player') {
+                    setPlayerHand(prev => [...prev, ...drawn]);
+                } else {
+                    setAiHand(prev => [...prev, ...drawn]);
+                }
+            };
+
+            const handleCardAction = (card, isPlayer, chosenColor = null) => {
+                let currentHand = isPlayer ? playerHand : aiHand;
+                let newHand = currentHand.filter(c => c.id !== card.id);
+                
+                if (isPlayer) setPlayerHand(newHand);
+                else setAiHand(newHand);
+
+                setDiscardPile([...discardPile, card]);
+                
+                let nextColor = chosenColor || card.color;
+                setActiveColor(nextColor);
+
+                if (newHand.length === 0) {
+                    setMessage(isPlayer ? 'لقد فزت! 🎉' : 'فاز الذكاء الاصطناعي! 😢');
+                    setTurn('gameover');
+                    return;
+                }
+
+                // نسيان قول UNO
+                if (isPlayer && newHand.length === 1 && !unoCalled) {
+                    setMessage('نسيت قول UNO! تم سحب ورقتين كعقاب.');
+                    drawCards(2, 'player');
+                }
+
+                let nextTurn = isPlayer ? 'ai' : 'player';
+                let actionMsg = isPlayer ? 'دور الذكاء الاصطناعي' : 'دورك!';
+
+                if (card.value === 'Skip' || card.value === 'Rev') {
+                    nextTurn = isPlayer ? 'player' : 'ai';
+                    actionMsg = isPlayer ? 'تخطي! العب مرة أخرى.' : 'الذكاء الاصطناعي يتخطاك ويلعب مجدداً.';
+                } else if (card.value === '+2') {
+                    drawCards(2, isPlayer ? 'ai' : 'player');
+                    nextTurn = isPlayer ? 'player' : 'ai';
+                    actionMsg = isPlayer ? 'أعطيت الخصم +2! العب مجدداً.' : 'أعطاك الذكاء +2! دوره مجدداً.';
+                } else if (card.value === 'Wild +4') {
+                    drawCards(4, isPlayer ? 'ai' : 'player');
+                    nextTurn = isPlayer ? 'player' : 'ai';
+                    actionMsg = isPlayer ? 'أعطيت الخصم +4 وتغير اللون! العب مجدداً.' : 'أعطاك الذكاء +4! دوره مجدداً.';
+                }
+
+                setMessage(actionMsg);
+                setTurn(nextTurn);
+                if(isPlayer) setUnoCalled(false); // إعادة تعيين بعد اللعب
+            };
+
+            const playCard = (card, isPlayer) => {
+                if (card.type === 'wild' && isPlayer) {
+                    setPendingWildCard(card);
+                    setShowColorPicker(true);
+                    return;
+                }
+                handleCardAction(card, isPlayer);
+            };
+
+            const onColorPicked = (color) => {
+                setShowColorPicker(false);
+                handleCardAction(pendingWildCard, true, color);
+                setPendingWildCard(null);
+            };
+
+            const drawSingleCard = (isPlayer) => {
+                if (deck.length === 0) return;
+                const newDeck = [...deck];
+                const card = newDeck.pop();
+                setDeck(newDeck);
+
+                if (isPlayer) {
+                    setPlayerHand([...playerHand, card]);
+                    setTurn('ai');
+                    setMessage('قمت بالسحب. دور الذكاء الاصطناعي.');
+                    setUnoCalled(false);
+                } else {
+                    setAiHand([...aiHand, card]);
+                    setTurn('player');
+                    setMessage('الذكاء الاصطناعي سحب ورقة. دورك.');
+                }
+            };
+
+            // منطق الذكاء الاصطناعي المطور
+            useEffect(() => {
+                if (turn === 'ai') {
+                    const aiTimer = setTimeout(() => {
+                        const playableCards = aiHand.filter(isValidPlay);
+                        if (playableCards.length > 0) {
+                            const cardToPlay = playableCards[0];
+                            if (cardToPlay.type === 'wild') {
+                                // الذكاء الاصطناعي يختار اللون الأكثر تواجداً في يده
+                                const colorsInHand = aiHand.filter(c => c.color !== 'black').map(c => c.color);
+                                const chosenColor = COLORS.reduce((a, b) => 
+                                    colorsInHand.filter(v => v === a).length >= colorsInHand.filter(v => v === b).length ? a : b
+                                , COLORS[0]); // افتراضي إذا كانت يده كلها جوكر
+                                handleCardAction(cardToPlay, false, chosenColor);
+                            } else {
+                                handleCardAction(cardToPlay, false);
+                            }
+                        } else {
+                            drawSingleCard(false);
+                        }
+                    }, 1500);
+                    return () => clearTimeout(aiTimer);
+                }
+            }, [turn, aiHand, topCard, activeColor]);
+
+            if (!topCard) return <div>جاري التحميل...</div>;
+
+            return (
+                <div className="glass-container">
+                    
+                    {/* نافذة اختيار اللون */}
+                    {showColorPicker && (
+                        <div className="color-picker-modal">
+                            <h2>اختر اللون الجديد</h2>
+                            <div className="color-options">
+                                {COLORS.map(c => (
+                                    <div key={c} className={`color-option ${c}`} onClick={() => onColorPicked(c)}></div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* منطقة الذكاء الاصطناعي */}
+                    <div className="player-area">
+                        <h2>الذكاء الاصطناعي (AI)</h2>
+                        <div className="cards-container">
+                            {aiHand.map((card, i) => (
+                                <div key={i} className="card card-ai">UNO</div>
+                            ))}
+                        </div>
+                        <span className="status-badge">البطاقات: {aiHand.length}</span>
+                    </div>
+
+                    {/* الطاولة للعب والسحب */}
+                    <div className="table-area">
+                        <div className="status-badge" style={{color: turn==='player'?'#34c759':'#ffcc00', border: 'none', background: 'transparent', fontSize: '1.4rem'}}>
+                            {message}
+                        </div>
+                        
+                        <div className="table-cards">
+                            <div 
+                                className={`card draw-pile ${turn === 'player' ? '' : 'disabled'}`}
+                                onClick={() => turn === 'player' && drawSingleCard(true)}
+                            >
+                                سحب<br/>ورقة
+                            </div>
+                            
+                            <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                                <div className={`card ${topCard.color === 'black' ? activeColor : topCard.color}`}>
+                                    {topCard.value}
+                                </div>
+                                <div className="current-color-indicator" style={{backgroundColor: activeColor === 'red' ? '#ff3b30' : activeColor === 'blue' ? '#007aff' : activeColor === 'green' ? '#34c759' : '#ffcc00', color: activeColor === 'yellow' ? 'black' : 'white'}}>
+                                    اللون: {activeColor}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* منطقة اللاعب */}
+                    <div className="player-area">
+                        <div style={{display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', padding: '0 20px'}}>
+                            <span className="status-badge">أنت (البطاقات: {playerHand.length})</span>
+                            <button 
+                                className="uno-btn" 
+                                disabled={playerHand.length !== 2 || unoCalled || turn !== 'player'}
+                                onClick={() => setUnoCalled(true)}
+                            >
+                                {unoCalled ? 'تم قول UNO!' : 'قل UNO!'}
+                            </button>
+                        </div>
+                        <div className="cards-container">
+                            {playerHand.map((card) => {
+                                const valid = turn === 'player' && isValidPlay(card);
+                                return (
+                                    <div 
+                                        key={card.id} 
+                                        className={`card ${card.color} ${!valid ? 'disabled' : ''}`}
+                                        onClick={() => valid && playCard(card, true)}
+                                    >
+                                        {card.value}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                        {turn === 'gameover' && (
+                            <button className="uno-btn" onClick={startNewGame} style={{marginTop: '10px', width: '200px'}}>
+                                العب مرة أخرى
+                            </button>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<UnoGame />);
+    </script>
+</body>
+</html>
