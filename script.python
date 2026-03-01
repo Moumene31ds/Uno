@@ -1,0 +1,107 @@
+from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS
+import yt_dlp
+import redis
+import json
+import random
+import os
+
+app = Flask(__name__)
+CORS(app)
+
+# الاتصال بقاعدة بيانات Redis للتخزين المؤقت
+cache = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+
+# قائمة الوكلاء (Proxies) لتجنب حظر الـ IP من يوتيوب
+PROXIES = [
+    # "http://proxy1_ip:port",
+    # "http://proxy2_ip:port",
+    None # نضع None ليعمل بدون بروكسي في حال لم تضف بروكسيات حقيقية
+]
+
+# مسار مجلد التنزيلات المؤقتة
+DOWNLOAD_FOLDER = "downloads"
+os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
+
+@app.route('/api/get-info', methods=['POST'])
+def get_video_info():
+    data = request.json
+    url = data.get('url')
+
+    if not url:
+        return jsonify({'error': 'الرجاء إدخال رابط صحيح'}), 400
+
+    # 1. نظام التخزين المؤقت (Caching)
+    # التحقق مما إذا كان الرابط قد تم البحث عنه مسبقاً
+    cached_data = cache.get(url)
+    if cached_data:
+        return jsonify(json.loads(cached_data))
+
+    # 2. إعدادات yt-dlp المتقدمة مع البروكسي
+    selected_proxy = random.choice(PROXIES)
+    
+    ydl_opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'proxy': selected_proxy,
+    }
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            
+            # استخراج الجودات المختلفة
+            formats = []
+            for f in info.get('formats', []):
+                # تصفية الصيغ للحصول على الفيديو أو الصوت فقط
+                if f.get('vcodec') != 'none' or f.get('acodec') != 'none':
+                    formats.append({
+                        'format_id': f.get('format_id'),
+                        'ext': f.get('ext'),
+                        'resolution': f.get('resolution', 'Audio only'),
+                        'filesize': f.get('filesize', 0)
+                    })
+
+            result = {
+                'title': info.get('title'),
+                'thumbnail': info.get('thumbnail'),
+                'formats': formats,
+                'url': url
+            }
+
+            # حفظ النتيجة في Redis لمدة ساعة (3600 ثانية) لتسريع الطلبات المستقبلية
+            cache.setex(url, 3600, json.dumps(result))
+
+            return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# 3. دمج الصوت والصورة (FFmpeg) وتنزيل الفيديو
+@app.route('/api/download', methods=['POST'])
+def download_video():
+    data = request.json
+    url = data.get('url')
+    format_id = data.get('format_id', 'best') # يمكن للمستخدم تحديد الجودة
+
+    # إذا اختار المستخدم جودة عالية (1080p+)، سيقوم yt-dlp تلقائياً باستخدام FFmpeg لدمج الصوت معها
+    ydl_opts = {
+        'format': f'{format_id}+bestaudio/best',
+        'outtmpl': f'{DOWNLOAD_FOLDER}/%(id)s.%(ext)s',
+        'merge_output_format': 'mp4', # إجبار FFmpeg على إخراج ملف MP4
+        'quiet': True
+    }
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            file_path = ydl.prepare_filename(info)
+            # تغيير الامتداد إلى mp4 لأننا دمجناه
+            file_path = file_path.rsplit('.', 1)[0] + '.mp4' 
+            
+            # إرسال الملف المدمج للمستخدم
+            return send_file(file_path, as_attachment=True)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(port=5000, debug=True)
